@@ -73,6 +73,9 @@ body {
 /* ===== Main - vùng cuộn duy nhất của app ===== */
 .app-main {
   flex: 1;
+  min-height: 0; /* BẮT BUỘC: flex item mặc định không co nhỏ hơn nội dung,
+                    thiếu dòng này overflow-y:auto không bao giờ kích hoạt
+                    -> không cuộn được bằng tay trên iOS */
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* cuộn mượt kiểu native trên iOS */
   overscroll-behavior: contain;
@@ -509,14 +512,11 @@ body.furigana-off .example-jp {
 }
 
 /* ===== Nút chấm Đúng/Sai ===== */
-/* sticky: luôn nổi phía trên thanh nav khi mặt sau thẻ dài, không cần cuộn xuống */
+/* nằm ngay dưới card theo dòng chảy bình thường, cuộn xuống để bấm */
 .fc-actions {
   width: 100%;
   display: flex;
   gap: 12px;
-  position: sticky;
-  bottom: calc(var(--nav-height) + var(--safe-bottom) + 12px);
-  z-index: 5;
 }
 
 .fc-actions[hidden] {
@@ -752,6 +752,12 @@ body.furigana-off .example-jp {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 8px;
+}
+
+.toolbar-btns {
+  display: flex;
+  gap: 8px;
 }
 
 .write-feedback {

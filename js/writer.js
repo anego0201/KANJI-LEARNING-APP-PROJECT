@@ -23,7 +23,8 @@ KM.writer = (function () {
   // Canvas viết tự do
   var ctx = null;
   var drawing = false;
-  var hasDrawn = false;
+  var strokes = [];        // các nét đã vẽ xong, mỗi nét = mảng điểm {x,y}
+  var currentStroke = null; // nét đang vẽ dở
 
   var el = {};
 
@@ -131,7 +132,8 @@ KM.writer = (function () {
     ctx.lineJoin = "round";
     ctx.lineWidth = 10;
     ctx.strokeStyle = "#f0f0f5";
-    hasDrawn = false;
+    strokes = [];
+    currentStroke = null;
   }
 
   function canvasPos(e) {
@@ -139,11 +141,45 @@ KM.writer = (function () {
     return { x: e.clientX - rect.left, y: e.clientY - rect.top };
   }
 
-  function clearCanvas() {
-    if (!ctx) return;
+  function hasDrawn() {
+    return strokes.length > 0 || currentStroke !== null;
+  }
+
+  /** Vẽ 1 nét (mảng điểm) lên canvas */
+  function drawStroke(points) {
+    if (!points.length) return;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    if (points.length === 1) {
+      ctx.lineTo(points[0].x + 0.1, points[0].y + 0.1); // chấm 1 điểm khi chỉ tap
+    } else {
+      for (var i = 1; i < points.length; i++) {
+        ctx.lineTo(points[i].x, points[i].y);
+      }
+    }
+    ctx.stroke();
+  }
+
+  /** Xóa canvas rồi vẽ lại toàn bộ các nét đã lưu */
+  function redrawAll() {
     var dpr = window.devicePixelRatio || 1;
     ctx.clearRect(0, 0, el.canvas.width / dpr, el.canvas.height / dpr);
-    hasDrawn = false;
+    strokes.forEach(drawStroke);
+  }
+
+  function clearCanvas() {
+    if (!ctx) return;
+    strokes = [];
+    currentStroke = null;
+    redrawAll();
+    el.freeFeedback.textContent = "";
+  }
+
+  /** Xóa nét vừa vẽ (không đụng các nét trước đó) */
+  function undoStroke() {
+    if (!ctx || strokes.length === 0) return;
+    strokes.pop();
+    redrawAll();
     el.freeFeedback.textContent = "";
   }
 
@@ -151,30 +187,37 @@ KM.writer = (function () {
     el.canvas.addEventListener("pointerdown", function (e) {
       e.preventDefault();
       drawing = true;
-      hasDrawn = true;
       el.canvas.setPointerCapture(e.pointerId);
       var p = canvasPos(e);
-      ctx.beginPath();
-      ctx.moveTo(p.x, p.y);
-      // chấm 1 điểm khi chỉ tap
-      ctx.lineTo(p.x + 0.1, p.y + 0.1);
-      ctx.stroke();
+      currentStroke = [p];
+      drawStroke(currentStroke);
     });
 
     el.canvas.addEventListener("pointermove", function (e) {
-      if (!drawing) return;
+      if (!drawing || !currentStroke) return;
       var p = canvasPos(e);
+      var prev = currentStroke[currentStroke.length - 1];
+      currentStroke.push(p);
+      // chỉ vẽ đoạn mới, không vẽ lại cả nét -> mượt
+      ctx.beginPath();
+      ctx.moveTo(prev.x, prev.y);
       ctx.lineTo(p.x, p.y);
       ctx.stroke();
     });
 
     ["pointerup", "pointercancel"].forEach(function (ev) {
-      el.canvas.addEventListener(ev, function () { drawing = false; });
+      el.canvas.addEventListener(ev, function () {
+        if (drawing && currentStroke) {
+          strokes.push(currentStroke); // chốt nét -> có thể undo từng nét
+          currentStroke = null;
+        }
+        drawing = false;
+      });
     });
   }
 
   function selfGrade(good) {
-    if (!hasDrawn) {
+    if (!hasDrawn()) {
       el.freeFeedback.textContent = "Bạn chưa viết gì mà 😄";
       return;
     }
@@ -227,6 +270,7 @@ KM.writer = (function () {
     document.getElementById("btn-animate").addEventListener("click", animate);
     document.getElementById("btn-quiz").addEventListener("click", startQuiz);
     document.getElementById("btn-clear").addEventListener("click", clearCanvas);
+    document.getElementById("btn-undo").addEventListener("click", undoStroke);
     document.getElementById("btn-grade-ok").addEventListener("click", function () { selfGrade(true); });
     document.getElementById("btn-grade-bad").addEventListener("click", function () { selfGrade(false); });
 
