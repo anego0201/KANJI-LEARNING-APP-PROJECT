@@ -56,6 +56,17 @@ window.KM = window.KM || {};
   function registerServiceWorker() {
     if (!("serviceWorker" in navigator)) return; // Safari cũ / file:// thì bỏ qua
 
+    // Khi SW phiên bản MỚI kích hoạt (nâng cấp) -> tự tải lại trang 1 lần để
+    // nhận bản mới ngay, không cần đóng/mở app 2 lần.
+    var hadController = !!navigator.serviceWorker.controller;
+    var refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", function () {
+      if (!hadController) { hadController = true; return; } // lần cài đầu: không reload
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+
     navigator.serviceWorker.register("sw.js").then(function () {
       // SW sẵn sàng = toàn bộ app đã nằm trong cache
       return navigator.serviceWorker.ready;
@@ -108,19 +119,8 @@ window.KM = window.KM || {};
     }
   });
 
-  // Chặn double-tap zoom trên iOS (phòng khi touch-action chưa đủ)
-  var lastTouchEnd = 0;
-  document.addEventListener(
-    "touchend",
-    function (e) {
-      var now = Date.now();
-      if (now - lastTouchEnd <= 300) {
-        e.preventDefault();
-      }
-      lastTouchEnd = now;
-    },
-    { passive: false }
-  );
+  // LƯU Ý: KHÔNG chặn double-tap zoom bằng JS (touchend + preventDefault) -
+  // hack đó phá cử chỉ vuốt cuộn trên iOS. Đã thay bằng CSS touch-action: manipulation.
 
   init();
 })();

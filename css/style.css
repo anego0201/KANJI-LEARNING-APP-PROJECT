@@ -23,6 +23,9 @@
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent; /* bỏ flash xám khi chạm trên iOS */
   -webkit-touch-callout: none;              /* chặn menu copy/share khi giữ lâu */
+  touch-action: manipulation;               /* chặn double-tap zoom NHƯNG vẫn cho
+                                               vuốt cuộn - thay cho hack JS touchend
+                                               (hack đó giết momentum scroll trên iOS) */
 }
 
 html, body {
@@ -48,11 +51,15 @@ body {
 #app {
   display: flex;
   flex-direction: column;
-  height: 100dvh;                /* dynamic viewport height - chính xác trên iOS 16+ */
+  /* THỨ TỰ QUAN TRỌNG: 100% là fallback bắt buộc - iOS < 15.4 không hiểu dvh,
+     thiếu fallback thì #app không bị giới hạn chiều cao -> app không cuộn được */
+  height: 100%;
+  height: 100dvh;                /* dynamic viewport height - chính xác trên iOS mới */
 }
 
 /* ===== Header ===== */
 .app-header {
+  flex-shrink: 0; /* header không bị bóp méo khi nội dung main dài */
   padding: calc(var(--safe-top) + 16px) 20px 12px;
   text-align: center;
   background: linear-gradient(180deg, #16162a 0%, var(--bg) 100%);
@@ -197,6 +204,12 @@ ruby rt {
 .standalone-badge {
   color: #4ade80;
   font-size: 0.9rem;
+}
+
+.app-version {
+  color: var(--text-dim);
+  font-size: 0.7rem;
+  opacity: 0.7;
 }
 
 /* ===== Bottom Navigation ===== */
@@ -689,6 +702,7 @@ body.furigana-off .example-jp {
 #hw-target {
   position: absolute;
   inset: 0;
+  touch-action: none; /* tô nét trong quiz không làm cuộn trang */
 }
 
 /* Canvas viết tự do */

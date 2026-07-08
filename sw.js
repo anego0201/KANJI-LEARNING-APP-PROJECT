@@ -6,7 +6,7 @@
    (v1 -> v2...) để iOS tải lại cache mới.
    ===================================================== */
 
-var CACHE_NAME = "kanji-master-v2";
+var CACHE_NAME = "kanji-master-v3";
 
 /* Toàn bộ tài nguyên cần cho app chạy không mạng */
 var PRECACHE = [
