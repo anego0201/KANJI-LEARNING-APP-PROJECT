@@ -8,8 +8,8 @@
    ===================================================== */
 
 window.KANJI_DATA = [].concat(
-  window.KANJI_N5 || []
-  // window.KANJI_N4 || []  (sắp ra mắt)
+  window.KANJI_N5 || [],
+  window.KANJI_N4 || []
 );
 
 /** Danh sách cấp JLPT hiện có trong data (cho bộ lọc UI) */
