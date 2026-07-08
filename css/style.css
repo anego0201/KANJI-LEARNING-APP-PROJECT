@@ -1,0 +1,841 @@
+/* =====================================================
+   Kanji Master - Phase 1
+   Mobile-first, tối ưu iOS Safari (standalone PWA)
+   ===================================================== */
+
+:root {
+  --bg: #1a1a2e;
+  --bg-card: #23233f;
+  --accent: #e94560;
+  --accent-soft: #ff6b81;
+  --text: #f0f0f5;
+  --text-dim: #9a9ab0;
+  --nav-height: 64px;
+
+  /* Vùng an toàn iOS (tai thỏ, thanh home) */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent; /* bỏ flash xám khi chạm trên iOS */
+  -webkit-touch-callout: none;              /* chặn menu copy/share khi giữ lâu */
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;              /* bỏ thanh cuộn mặc định của Safari */
+  overscroll-behavior: none;     /* chống bounce overscroll */
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  position: fixed;               /* khóa viewport - chống rubber-band trên iOS */
+  inset: 0;
+  width: 100%;
+  -webkit-font-smoothing: antialiased; /* chữ mảnh, sắc nét trên màn Retina */
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;    /* bỏ delay 300ms + chặn double-tap zoom */
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;                /* dynamic viewport height - chính xác trên iOS 16+ */
+}
+
+/* ===== Header ===== */
+.app-header {
+  padding: calc(var(--safe-top) + 16px) 20px 12px;
+  text-align: center;
+  background: linear-gradient(180deg, #16162a 0%, var(--bg) 100%);
+}
+
+.app-title {
+  font-size: 1.7rem;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+.app-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+/* ===== Main - vùng cuộn duy nhất của app ===== */
+.app-main {
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* cuộn mượt kiểu native trên iOS */
+  overscroll-behavior: contain;
+  padding: 16px 20px calc(var(--nav-height) + var(--safe-bottom) + 24px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* ===== Lưới thống kê (Phase 2) ===== */
+.stats-grid {
+  width: 100%;
+  max-width: 420px;
+  display: grid;
+  /* minmax(0,1fr): cho phép cột co nhỏ hơn min-content, tránh tràn ngang trên màn hẹp */
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stat-box {
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 12px 4px;
+  text-align: center;
+  min-width: 0;
+}
+
+.stat-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+}
+
+.stat-label {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+
+.stat-due .stat-value {
+  color: var(--accent-soft);
+}
+
+/* ===== Thẻ Kanji mẫu ===== */
+.sample-card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 28px 22px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.sample-kanji {
+  font-size: 6rem;
+  line-height: 1.2;
+  font-weight: 500;
+  color: var(--text);
+  margin-bottom: 18px;
+}
+
+.sample-info {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sample-row {
+  font-size: 1rem;
+  line-height: 1.9;
+}
+
+.sample-row .label {
+  color: var(--accent-soft);
+  font-weight: 600;
+  margin-right: 6px;
+  font-size: 0.85rem;
+}
+
+.sample-example {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.example-en {
+  display: block;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-top: 4px;
+}
+
+ruby rt {
+  font-size: 0.55em;
+  color: var(--accent-soft);
+}
+
+/* ===== Nút cài đặt ===== */
+.btn-install {
+  width: 100%;
+  max-width: 420px;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.btn-install:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+.standalone-badge {
+  color: #4ade80;
+  font-size: 0.9rem;
+}
+
+/* ===== Bottom Navigation ===== */
+.app-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: calc(var(--nav-height) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom); /* tránh đè lên thanh home iPhone */
+  display: flex;
+  background: rgba(22, 22, 42, 0.92);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: none;
+  background: none;
+  color: var(--text-dim);
+  font-size: 0.65rem;
+  cursor: pointer;
+}
+
+.nav-item.active {
+  color: var(--accent-soft);
+}
+
+.nav-item:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.nav-icon {
+  font-size: 1.35rem;
+}
+
+/* =====================================================
+   Phase 3 - Màn hình & Flashcard
+   ===================================================== */
+
+/* Mỗi màn hình là 1 section con của .app-main */
+.screen {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.screen[hidden] {
+  display: none;
+}
+
+/* ===== Nút chính ===== */
+.btn-primary {
+  width: 100%;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1.05rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+  opacity: 0.85;
+}
+
+/* ===== Thanh tiến độ phiên học ===== */
+.study-topbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+}
+
+.study-count {
+  font-weight: 600;
+  color: var(--text);
+}
+
+.study-badge {
+  font-size: 0.8rem;
+}
+
+/* ===== Flashcard ===== */
+.flashcard {
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: 20px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  overflow: hidden;
+}
+
+/* Mặt trước */
+.fc-front {
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  padding: 32px 20px;
+  cursor: pointer;
+}
+
+.fc-kanji {
+  font-size: 8rem;
+  line-height: 1.15;
+  font-weight: 500;
+}
+
+.fc-hint {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+/* display:flex sẽ đè lên attribute hidden -> phải ép lại bằng CSS */
+.fc-front[hidden],
+.fc-back[hidden] {
+  display: none;
+}
+
+/* Mặt sau */
+.fc-back {
+  padding: 22px 20px 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: fc-reveal 0.25s ease;
+}
+
+@keyframes fc-reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.fc-back-kanji {
+  font-size: 3.4rem;
+  text-align: center;
+  line-height: 1.2;
+}
+
+.fc-readings {
+  display: flex;
+  justify-content: center;
+  gap: 22px;
+  font-size: 0.95rem;
+}
+
+.fc-reading .label {
+  color: var(--accent-soft);
+  font-weight: 700;
+  margin-right: 5px;
+  font-size: 0.8rem;
+}
+
+.fc-meaning {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fc-section {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 12px;
+}
+
+.fc-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.fc-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-soft);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.fc-section-head .fc-section-title {
+  margin-bottom: 0;
+}
+
+/* Bộ thủ phân rã */
+.fc-radicals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.radical-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.radical-char {
+  font-size: 1.5rem;
+}
+
+.radical-meaning {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+
+/* Câu chuyện ghi nhớ */
+.fc-mnemonic {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: rgba(233, 69, 96, 0.08);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 10px 10px 0;
+  padding: 10px 12px;
+}
+
+/* Câu ví dụ (Đọc hiểu) */
+.fc-examples {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.fc-example {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.example-jp {
+  font-size: 1.05rem;
+  line-height: 2.1; /* chừa chỗ cho furigana phía trên */
+}
+
+/* ===== Bật/Tắt Furigana ===== */
+/* Khi tắt: ẩn toàn bộ <rt>, giảm line-height cho gọn */
+body.furigana-off rt {
+  display: none;
+}
+
+body.furigana-off .example-jp {
+  line-height: 1.6;
+}
+
+.furigana-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.furigana-toggle .toggle-label {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+.furigana-toggle input {
+  display: none;
+}
+
+.toggle-track {
+  width: 42px;
+  height: 24px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.15);
+  position: relative;
+  transition: background 0.2s ease;
+}
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.2s ease;
+}
+
+.furigana-toggle input:checked + .toggle-track {
+  background: var(--accent);
+}
+
+.furigana-toggle input:checked + .toggle-track .toggle-thumb {
+  transform: translateX(18px);
+}
+
+/* ===== Nút chấm Đúng/Sai ===== */
+/* sticky: luôn nổi phía trên thanh nav khi mặt sau thẻ dài, không cần cuộn xuống */
+.fc-actions {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+  position: sticky;
+  bottom: calc(var(--nav-height) + var(--safe-bottom) + 12px);
+  z-index: 5;
+}
+
+.fc-actions[hidden] {
+  display: none;
+}
+
+.btn-answer {
+  flex: 1;
+  padding: 16px;
+  border: none;
+  border-radius: 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+.btn-answer:active {
+  transform: scale(0.96);
+  opacity: 0.85;
+}
+
+.btn-wrong {
+  background: #64344a;
+}
+
+.btn-correct {
+  background: #2f9e63;
+}
+
+/* ===== Màn hình hoàn thành phiên ===== */
+.study-done {
+  width: 100%;
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.study-done[hidden] {
+  display: none;
+}
+
+.done-icon {
+  font-size: 3rem;
+}
+
+.done-msg {
+  color: var(--text-dim);
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.study-done .btn-primary {
+  margin-top: 10px;
+}
+
+/* =====================================================
+   Phase 4 - Luyện viết tay
+   ===================================================== */
+
+/* Hàng chọn Kanji (cuộn ngang) */
+.kanji-picker {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+  scrollbar-width: none;
+}
+
+.kanji-picker::-webkit-scrollbar {
+  display: none;
+}
+
+.kanji-chip {
+  flex: 0 0 auto;
+  width: 48px;
+  height: 48px;
+  border: none;
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.kanji-chip.active {
+  background: var(--accent);
+  font-weight: 700;
+}
+
+/* Tab chuyển chế độ */
+.write-tabs {
+  width: 100%;
+  display: flex;
+  background: var(--bg-card);
+  border-radius: 14px;
+  padding: 4px;
+  gap: 4px;
+}
+
+.write-tab {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: none;
+  color: var(--text-dim);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.write-tab.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.write-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.write-panel[hidden] {
+  display: none;
+}
+
+/* Ô vẽ vuông nền ô ly: viền + 2 đường kẻ giữa nét đứt */
+.grid-box {
+  position: relative;
+  width: 100%;
+  max-width: 320px;
+  aspect-ratio: 1;
+  background: #20203a;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.grid-line-h,
+.grid-line-v {
+  position: absolute;
+  pointer-events: none;
+}
+
+.grid-line-h {
+  top: 50%;
+  left: 6px;
+  right: 6px;
+  border-top: 1px dashed rgba(255, 255, 255, 0.18);
+}
+
+.grid-line-v {
+  left: 50%;
+  top: 6px;
+  bottom: 6px;
+  border-left: 1px dashed rgba(255, 255, 255, 0.18);
+}
+
+#hw-target {
+  position: absolute;
+  inset: 0;
+}
+
+/* Canvas viết tự do */
+#free-canvas {
+  position: absolute;
+  inset: 0;
+  touch-action: none; /* bút vẽ không làm cuộn trang trên iOS */
+  cursor: crosshair;
+}
+
+/* Chữ mẫu mờ phía sau canvas */
+.canvas-ghost {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13rem;
+  line-height: 1;
+  color: rgba(255, 255, 255, 0.07);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Nút hàng ngang */
+.write-actions {
+  width: 100%;
+  display: flex;
+  gap: 12px;
+}
+
+.btn-secondary {
+  flex: 1;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: var(--bg-card);
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-secondary:active {
+  opacity: 0.8;
+}
+
+.btn-half {
+  flex: 1;
+  padding: 14px;
+}
+
+.btn-small {
+  flex: 0 0 auto;
+  padding: 10px 18px;
+}
+
+.write-toolbar {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.write-feedback {
+  min-height: 1.4em;
+  font-size: 0.9rem;
+  color: var(--text-dim);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.self-grade {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.self-grade-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--accent-soft);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* ===== Modal hướng dẫn cài đặt ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 100;
+}
+
+.modal-overlay[hidden] {
+  display: none;
+}
+
+.modal-box {
+  background: var(--bg-card);
+  border-radius: 20px;
+  padding: 26px 22px;
+  max-width: 380px;
+  width: 100%;
+}
+
+.modal-box h2 {
+  font-size: 1.2rem;
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.install-steps {
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.share-icon {
+  display: inline-block;
+  color: #3b9cff;
+  font-weight: 700;
+}
+
+.btn-close {
+  width: 100%;
+  margin-top: 20px;
+  padding: 14px;
+  border: none;
+  border-radius: 14px;
+  background: var(--accent);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-close:active {
+  opacity: 0.85;
+}
