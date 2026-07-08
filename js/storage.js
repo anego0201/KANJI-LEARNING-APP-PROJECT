@@ -32,8 +32,32 @@ KM.storage = (function () {
     newCardsPerDay: 10,     // số Kanji MỚI tối đa đưa vào học mỗi ngày
     furiganaOn: true,       // bật/tắt furigana (dùng ở Phase 3)
     newCardsDate: null,     // ngày (yyyy-mm-dd) của bộ đếm bên dưới
-    newCardsIntroduced: 0   // số Kanji mới đã đưa vào trong ngày đó
+    newCardsIntroduced: 0,  // số Kanji mới đã đưa vào trong ngày đó
+    studyLevel: "all"       // lọc thẻ MỚI theo cấp JLPT: "all" | "N5" | "N4"...
   };
+
+  /* Bản đầu tiên dùng id romaji; từ khi mở rộng data, id = chính chữ Kanji.
+     Migrate tiến độ cũ sang id mới để không mất dữ liệu học. */
+  var LEGACY_IDS = {
+    kyuu: "休", moku: "木", jin: "人", nichi: "日", getsu: "月",
+    san: "山", sen: "川", gaku: "学", kou: "校", shoku: "食"
+  };
+
+  function migrateLegacyIds(progressMap) {
+    var changed = false;
+    for (var oldId in LEGACY_IDS) {
+      if (progressMap[oldId]) {
+        var newId = LEGACY_IDS[oldId];
+        if (!progressMap[newId]) {
+          progressMap[newId] = progressMap[oldId];
+          progressMap[newId].id = newId;
+        }
+        delete progressMap[oldId];
+        changed = true;
+      }
+    }
+    return changed;
+  }
 
   function safeParse(json, fallback) {
     try {
@@ -46,7 +70,9 @@ KM.storage = (function () {
 
   /** Đọc toàn bộ map tiến độ: { kanjiId: progressRecord } */
   function loadProgress() {
-    return safeParse(localStorage.getItem(PROGRESS_KEY), {});
+    var map = safeParse(localStorage.getItem(PROGRESS_KEY), {});
+    if (migrateLegacyIds(map)) saveProgress(map); // chỉ ghi lại khi có migrate
+    return map;
   }
 
   function saveProgress(progressMap) {

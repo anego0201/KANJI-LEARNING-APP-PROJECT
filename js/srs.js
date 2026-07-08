@@ -78,10 +78,12 @@ KM.srs = (function () {
     });
   }
 
-  /** Kanji CHƯA từng học */
+  /** Kanji CHƯA từng học (lọc theo cấp JLPT đã chọn trong settings) */
   function getNewCards() {
     var progress = KM.storage.loadProgress();
+    var level = KM.storage.loadSettings().studyLevel;
     return KANJI_DATA.filter(function (k) {
+      if (level !== "all" && k.jlpt !== level) return false;
       var rec = progress[k.id];
       return !rec || rec.lastReview === null;
     });

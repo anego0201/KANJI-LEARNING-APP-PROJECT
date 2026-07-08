@@ -101,7 +101,7 @@ KM.writer = (function () {
   function startQuiz() {
     if (!writer) return;
     quizMistakes = 0;
-    setFeedback("✏️ Vẽ lần lượt " + current.strokes + " nét theo đúng thứ tự...");
+    setFeedback("✏️ Vẽ lần lượt các nét theo đúng thứ tự...");
     writer.quiz({
       onMistake: function () {
         quizMistakes += 1;
@@ -110,7 +110,7 @@ KM.writer = (function () {
         var n = summary.totalMistakes;
         setFeedback(
           n === 0
-            ? "🎉 Hoàn hảo! Đúng toàn bộ " + current.strokes + " nét."
+            ? "🎉 Hoàn hảo! Đúng toàn bộ các nét."
             : "✅ Hoàn thành! Bạn vẽ sai " + n + " lần. Thử lại để đạt điểm tuyệt đối nhé."
         );
       }

@@ -212,6 +212,43 @@ ruby rt {
   opacity: 0.7;
 }
 
+/* ===== Bộ lọc cấp JLPT (trang chủ) ===== */
+.level-filter {
+  width: 100%;
+  max-width: 420px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.level-filter-label {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+  flex-shrink: 0;
+}
+
+.level-chips {
+  display: flex;
+  gap: 6px;
+}
+
+.level-chip {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 12px;
+  background: var(--bg-card);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.level-chip.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* ===== Bottom Navigation ===== */
 .app-nav {
   position: fixed;

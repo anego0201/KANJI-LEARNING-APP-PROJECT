@@ -36,6 +36,28 @@ window.KM = window.KM || {};
   }
   KM.refreshStats = refreshStats;
 
+  /** Vẽ các chip chọn cấp JLPT (Tất cả / N5 / N4...) từ data hiện có */
+  function buildLevelFilter() {
+    var wrap = document.getElementById("level-chips");
+    var current = KM.storage.loadSettings().studyLevel;
+    var options = ["all"].concat(window.KANJI_LEVELS || []);
+
+    wrap.innerHTML = "";
+    options.forEach(function (lv) {
+      var b = document.createElement("button");
+      b.className = "level-chip" + (lv === current ? " active" : "");
+      b.textContent = lv === "all" ? "Tất cả" : lv;
+      b.addEventListener("click", function () {
+        var settings = KM.storage.loadSettings();
+        settings.studyLevel = lv;
+        KM.storage.saveSettings(settings);
+        buildLevelFilter(); // vẽ lại trạng thái active
+        refreshStats();     // "Mới hôm nay" đổi theo bộ lọc
+      });
+      wrap.appendChild(b);
+    });
+  }
+
   /** Chuyển màn hình: home / study (write, stats sẽ thêm ở Phase sau) */
   function showScreen(name) {
     document.querySelectorAll(".screen").forEach(function (s) {
@@ -80,6 +102,7 @@ window.KM = window.KM || {};
 
   function init() {
     refreshStats();
+    buildLevelFilter();
     KM.flashcard.bindEvents();
     registerServiceWorker();
 
